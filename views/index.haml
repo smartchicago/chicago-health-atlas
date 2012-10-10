@@ -12,25 +12,37 @@
 
     .well
       %h4
-        Recycling services
-      %ul.inputs-list.unstyled
-        %li
-          %label.checkbox.inline
-            %input#cbType1{:type => "checkbox"}
-            %span.filter-box.filter-blue
-            City drop-off location
-        %li
-          %label.checkbox.inline
-            %input#cbType2{:type => "checkbox"}
-            %span.filter-box.filter-green
-            Private business
-        %li
-          %label.checkbox.inline
-            %input#cbType3{:type => "checkbox"}
-            %span.filter-box.filter-red
-            Hazardous materials
-      
+        Health indicators
 
+        %label 
+          %select#indicator_view.input-block-level{:multiple => "multiple", :style => "height: 300px"}
+            %option{:value => "Birth Rate", :selected => "selected"} Birth Rate
+            %option{:value => "General Fertility Rate" } General Fertility Rate
+            %option{:value => "Low Birth Weight" } Low Birth Weight
+            %option{:value => "Prenatal Care Beginning in First Trimester" } Prenatal Care Beginning in First Trimester
+            %option{:value => "Preterm Births" } Preterm Births
+            %option{:value => "Teen Birth Rate" } Teen Birth Rate
+            %option{:value => "Assault (Homicide)" } Assault (Homicide)
+            %option{:value => "Breast cancer in females" } Breast cancer in females
+            %option{:value => "Cancer (All Sites)" } Cancer (All Sites)
+            %option{:value => "Colorectal Cancer" } Colorectal Cancer
+            %option{:value => "Diabetes-related" } Diabetes-related
+            %option{:value => "Firearm-related" } Firearm-related
+            %option{:value => "Infant Mortality Rate" } Infant Mortality Rate
+            %option{:value => "Lung Cancer" } Lung Cancer
+            %option{:value => "Prostate Cancer in Males" } Prostate Cancer in Males
+            %option{:value => "Stroke (Cerebrovascular Disease)" } Stroke (Cerebrovascular Disease)
+            %option{:value => "Childhood Blood Lead Level Screening" } Childhood Blood Lead Level Screening
+            %option{:value => "Childhood Lead Poisoning" } Childhood Lead Poisoning
+            %option{:value => "Gonorrhea in Females" } Gonorrhea in Females
+            %option{:value => "Gonorrhea in Males" } Gonorrhea in Males
+            %option{:value => "Tuberculosis" } Tuberculosis
+            %option{:value => "Below Poverty Level" } Below Poverty Level
+            %option{:value => "Crowded Housing" } Crowded Housing
+            %option{:value => "Dependency" } Dependency
+            %option{:value => "No High School Diploma" } No High School Diploma
+            %option{:value => "Per Capita Income" } Per Capita Income
+            %option{:value => "Unemployment" } Unemployment
     %p
       A project by
       %a{:href => "http://derekeder.com"} Derek Eder
@@ -57,7 +69,7 @@
       $('label.checkbox.inline').popover();
       
       MapsLib.initialize();
-      $(':checkbox').click(function(){
+      $('#indicator_view').change(function(){
         MapsLib.doSearch();
       });
       

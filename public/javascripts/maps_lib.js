@@ -18,7 +18,7 @@ var MapsLib = {
   
   //the encrypted Table ID of your Fusion Table (found under File => About)
   //NOTE: numeric IDs will be depricated soon
-  fusionTableId:      "1m4Ez9xyTGfY2CU6O-UgEcPzlS0rnzLU93e4Faa0",  
+  fusionTableId:      "1Fc7U3cdueYMlNy2c4SPbKaoQmju5J6UYhkHQNHc",  
   
   //*New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/   
   //*Important* this key is for demonstration purposes. please register your own.   
@@ -34,9 +34,10 @@ var MapsLib = {
   recordName:         "result",       //for showing number of results
   recordNamePlural:   "results", 
   
-  searchRadius:       805,            //in meters ~ 1/2 mile
+  searchRadius:       1,            //in meters ~ 1/2 mile
   defaultZoom:        11,             //zoom level when map is loaded (bigger is more zoomed in)
-  addrMarkerImage: 'http://derekeder.com/images/icons/blue-pushpin.png',
+  addrMarkerImage: '/images/blue-pushpin.png',
+  infoWindow: null,
   currentPinpoint: null,
   
   initialize: function() {
@@ -54,11 +55,9 @@ var MapsLib = {
     
     //reset filters
     $("#txtSearchAddress").val(MapsLib.convertToPlainString($.address.parameter('address')));
-    var loadRadius = MapsLib.convertToPlainString($.address.parameter('radius'));
-    if (loadRadius != "") $("#ddlRadius").val(loadRadius);
-    else $("#ddlRadius").val(MapsLib.searchRadius);
-    $(":checkbox").attr("checked", "checked");
     $("#resultCount").hide();
+
+    console.log(MapsLib.mapStyles());
      
     //run the default search
     MapsLib.doSearch();
@@ -67,23 +66,22 @@ var MapsLib = {
   doSearch: function(location) {
     MapsLib.clearSearch();
     var address = $("#txtSearchAddress").val();
-    MapsLib.searchRadius = $("#ddlRadius").val();
 
     var whereClause = MapsLib.locationColumn + " not equal to ''";
     
-    //-----filter by type-------
-    //remove MapsLib if you don't have any types to filter
+    // //-----filter by type-------
+    // //remove MapsLib if you don't have any types to filter
     
-    //best way to filter results by a type is to create a 'type' column and assign each row a number (strings work as well, but numbers are faster). then we can use the 'IN' operator and return all that are selected
-    //NOTE: if your column name has spaces in it, surround it with single quotes 
-    //example: var searchType = "'my filter' IN (-1,";
-    var searchType = "type IN (-1,";
-    if ( $("#cbType1").is(':checked')) searchType += "1,";
-    if ( $("#cbType2").is(':checked')) searchType += "2,";
-    if ( $("#cbType3").is(':checked')) searchType += "3,";
-    whereClause += " AND " + searchType.slice(0, searchType.length - 1) + ")";
+    // //best way to filter results by a type is to create a 'type' column and assign each row a number (strings work as well, but numbers are faster). then we can use the 'IN' operator and return all that are selected
+    // //NOTE: if your column name has spaces in it, surround it with single quotes 
+    // //example: var searchType = "'my filter' IN (-1,";
+    // var searchType = "type IN (-1,";
+    // if ( $("#cbType1").is(':checked')) searchType += "1,";
+    // if ( $("#cbType2").is(':checked')) searchType += "2,";
+    // if ( $("#cbType3").is(':checked')) searchType += "3,";
+    // whereClause += " AND " + searchType.slice(0, searchType.length - 1) + ")";
     
-    //-------end of filter by type code--------
+    // //-------end of filter by type code--------
     
     if (address != "") {
       if (address.toLowerCase().indexOf(MapsLib.locationScope) == -1)
@@ -94,7 +92,6 @@ var MapsLib = {
           MapsLib.currentPinpoint = results[0].geometry.location;
           
           $.address.parameter('address', encodeURIComponent(address));
-          $.address.parameter('radius', encodeURIComponent(MapsLib.searchRadius));
           map.setCenter(MapsLib.currentPinpoint);
           map.setZoom(14);
           
@@ -108,7 +105,6 @@ var MapsLib = {
           
           whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadius + "))";
           
-          MapsLib.drawSearchRadiusCircle(MapsLib.currentPinpoint);
           MapsLib.submitSearch(whereClause, map, MapsLib.currentPinpoint);
         } 
         else {
@@ -122,16 +118,230 @@ var MapsLib = {
   },
   
   submitSearch: function(whereClause, map, location) {
+    var indicator_view = $('#indicator_view').val();
+
     //get using all filters
     MapsLib.searchrecords = new google.maps.FusionTablesLayer({
       query: {
         from:   MapsLib.fusionTableId,
         select: MapsLib.locationColumn,
         where:  whereClause
-      }
+      },
+      styles: MapsLib.mapStyles(),
+      suppressInfoWindows: true
     });
+
+    if (location) {
+      MapsLib.getInfoWindowContent(whereClause + addressWhereClause);
+    }
+
     MapsLib.searchrecords.setMap(map);
     MapsLib.displayCount(whereClause);
+
+    if (MapsLib.infoWindow) MapsLib.infoWindow.close();
+    
+
+    //override default info window
+    google.maps.event.addListener(MapsLib.searchrecords, 'click', 
+      function(e) { 
+        if (MapsLib.infoWindow) MapsLib.infoWindow.close();
+        console.log('showing: ' + indicator_view);
+        console.log(e.row);
+        console.log(e.row['Community Area Name'].value);
+        console.log(e.row[indicator_view].value);
+        MapsLib.openFtInfoWindow(e.latLng, e.row['Community Area Name'].value, indicator_view, e.row[indicator_view].value);
+      }
+    ); 
+  },
+
+  openFtInfoWindow: function(position, community_area, indicator_name, indicator_value) {
+    // Set up and create the infowindow
+    if (!MapsLib.infoWindow) MapsLib.infoWindow = new google.maps.InfoWindow({});
+     
+    var content = "<div class='googft-info-window' style='font-family: sans-serif'>";
+    content += "<span class='lead'>" + community_area + "</span>"
+    content += "<p>" + indicator_name + ": " + indicator_value + "</p>";
+    content += '</div>';
+    
+    MapsLib.infoWindow.setOptions({
+      content: content,
+      pixelOffset: null,
+      position: position
+    });
+    // Infowindow-opening event handler
+    MapsLib.infoWindow.open(map);
+    //MapsLib.getInfoWindowDescription(zone_class);
+  },
+  
+  getInfoWindowContent: function(whereClause) {
+    var indicator_view = $('#indicator_view').val();
+    var selectColumns = "'Community Area Name', '" + indicator_view + "'";
+    MapsLib.query(selectColumns, whereClause, MapsLib.fusionTableId, "MapsLib.setInfoWindowContent");
+  },
+  
+  setInfoWindowContent: function(json) { 
+    var data = json["rows"];
+    MapsLib.openFtInfoWindow(MapsLib.currentPinpoint, data[0][0], "Name", data[0][1])
+  },
+
+  bucketRanges: function(indicator_view) {
+
+    var ranges = 
+    {
+      "Birth Rate": {
+        "max": 22.4,
+        "min": 9.4,
+      },
+      "General Fertility Rate": {
+        "max": 94.9,
+        "min": 27.7,
+      },
+      "Low Birth Weight": {
+        "max": 19.7,
+        "min": 3.5,
+      },
+      "Prenatal Care Beginning in First Trimester": {
+        "max": 94.5,
+        "min": 63.6,
+      },
+      "Preterm Births": {
+        "max": 17.5,
+        "min": 5,
+      },
+      "Teen Birth Rate": {
+        "max": 116.9,
+        "min": 1.3,
+      },
+      "Assault (Homicide)": {
+        "max": 62.9,
+        "min": 0,
+      },
+      "Breast cancer in females": {
+        "max": 56,
+        "min": 8.6,
+      },
+      "Cancer (All Sites)": {
+        "max": 283.9,
+        "min": 120.9,
+      },
+      "Colorectal Cancer": {
+        "max": 55.4,
+        "min": 6.4,
+      },
+      "Diabetes-related": {
+        "max": 122.8,
+        "min": 26.8,
+      },
+      "Firearm-related": {
+        "max": 63.6,
+        "min": 1.5,
+      },
+      "Infant Mortality Rate": {
+        "max": 27.6,
+        "min": 1.5,
+      },
+      "Lung Cancer": {
+        "max": 98.7,
+        "min": 23.6,
+      },
+      "Prostate Cancer in Males": {
+        "max": 129.1,
+        "min": 2.5,
+      },
+      "Stroke (Cerebrovascular Disease)": {
+        "max": 110.9,
+        "min": 23.5,
+      },
+      "Childhood Blood Lead Level Screening": {
+        "max": 609.4,
+        "min": 0,
+      },
+      "Childhood Lead Poisoning": {
+        "max": 3,
+        "min": 0,
+      },
+      "Gonorrhea in Females": {
+        "max": 2664.6,
+        "min": 0,
+      },
+      "Gonorrhea in Males": {
+        "max": 2125.4,
+        "min": 0,
+      },
+      "Tuberculosis": {
+        "max": 22.7,
+        "min": 0,
+      },
+      "Below Poverty Level": {
+        "max": 61.4,
+        "min": 3.1,
+      },
+      "Crowded Housing": {
+        "max": 17.6,
+        "min": 0.2,
+      },
+      "Dependency": {
+        "max": 50.2,
+        "min": 15.5,
+      },
+      "No High School Diploma": {
+        "max": 58.7,
+        "min": 2.9,
+      },
+      "Per Capita Income": {
+        "max": 87163,
+        "min": 8535,
+      },
+      "Unemployment": {
+        "max": 40,
+        "min": 4.2,
+      }
+    }
+
+    return [ranges[indicator_view]['min'], ranges[indicator_view]['max']];
+
+  },
+
+  mapStyles: function() {
+    console.log('called mapStyles');
+    var indicator_view = $('#indicator_view').val();
+
+    var ranges = MapsLib.bucketRanges(indicator_view);
+    var min = ranges[0];
+    var max = ranges[1];
+    var num_buckets = 4;
+    var range = max - min;
+    var interval = range / num_buckets;
+    var intervalArray = [ min, (min + interval), (min + interval*2), (min + interval*3) ];
+
+    console.log(intervalArray);
+    return [
+      {
+        polygonOptions: {
+          fillColor: "#cccccc",
+          fillOpacity: 0.5
+        }
+      }, {
+        where: "'" + indicator_view + "' >= " + intervalArray[0] + " AND '" + indicator_view + "' < " + intervalArray[1] + "",
+        polygonOptions: {
+          fillColor: "#6fa8dc"
+        }
+      }, {
+        where: "'" + indicator_view + "' >= " + intervalArray[1] + " AND '" + indicator_view + "' < " + intervalArray[2] + "",
+        polygonOptions: {
+          fillColor: "#3d85c6"
+        }
+      }, {
+        where: "'" + indicator_view + "' >= " + intervalArray[2] + " AND '" + indicator_view + "' < " + intervalArray[3] + "",
+        polygonOptions: {
+          fillColor: "#0b5394"
+        }
+      }, {
+        where: "'" + indicator_view + "' >= " + intervalArray[3] + "",
+        polygonOptions: {
+          fillColor: "#073763"
+        }
+      }];
   },
   
   clearSearch: function() {
@@ -139,8 +349,6 @@ var MapsLib = {
       MapsLib.searchrecords.setMap(null);
     if (MapsLib.addrMarker != null)
       MapsLib.addrMarker.setMap(null);  
-    if (MapsLib.searchRadiusCircle != null)
-      MapsLib.searchRadiusCircle.setMap(null);
   },
   
   findMe: function() {
@@ -170,22 +378,6 @@ var MapsLib = {
         alert("Geocoder failed due to: " + status);
       }
     });
-  },
-  
-  drawSearchRadiusCircle: function(point) {
-      var circleOptions = {
-        strokeColor: "#4b58a6",
-        strokeOpacity: 0.3,
-        strokeWeight: 1,
-        fillColor: "#4b58a6",
-        fillOpacity: 0.05,
-        map: map,
-        center: point,
-        clickable: false,
-        zIndex: -1,
-        radius: parseInt(MapsLib.searchRadius)
-      };
-      MapsLib.searchRadiusCircle = new google.maps.Circle(circleOptions);
   },
   
   query: function(selectColumns, whereClause, callback) {
