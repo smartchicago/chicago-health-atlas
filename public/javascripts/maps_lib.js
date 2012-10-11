@@ -56,8 +56,6 @@ var MapsLib = {
     //reset filters
     $("#txtSearchAddress").val(MapsLib.convertToPlainString($.address.parameter('address')));
     $("#resultCount").hide();
-
-    console.log(MapsLib.mapStyles());
      
     //run the default search
     MapsLib.doSearch();
@@ -132,23 +130,21 @@ var MapsLib = {
     });
 
     if (location) {
-      MapsLib.getInfoWindowContent(whereClause + addressWhereClause);
+      MapsLib.getInfoWindowContent(whereClause);
     }
 
     MapsLib.searchrecords.setMap(map);
-    MapsLib.displayCount(whereClause);
 
     if (MapsLib.infoWindow) MapsLib.infoWindow.close();
-    
 
     //override default info window
     google.maps.event.addListener(MapsLib.searchrecords, 'click', 
       function(e) { 
         if (MapsLib.infoWindow) MapsLib.infoWindow.close();
-        console.log('showing: ' + indicator_view);
-        console.log(e.row);
-        console.log(e.row['Community Area Name'].value);
-        console.log(e.row[indicator_view].value);
+        // console.log('showing: ' + indicator_view);
+        // console.log(e.row);
+        // console.log(e.row['Community Area Name'].value);
+        // console.log(e.row[indicator_view].value);
         MapsLib.openFtInfoWindow(e.latLng, e.row['Community Area Name'].value, indicator_view, e.row[indicator_view].value);
       }
     ); 
@@ -176,12 +172,12 @@ var MapsLib = {
   getInfoWindowContent: function(whereClause) {
     var indicator_view = $('#indicator_view').val();
     var selectColumns = "'Community Area Name', '" + indicator_view + "'";
-    MapsLib.query(selectColumns, whereClause, MapsLib.fusionTableId, "MapsLib.setInfoWindowContent");
+    MapsLib.query(selectColumns, whereClause, "MapsLib.setInfoWindowContent");
   },
   
   setInfoWindowContent: function(json) { 
     var data = json["rows"];
-    MapsLib.openFtInfoWindow(MapsLib.currentPinpoint, data[0][0], "Name", data[0][1])
+    MapsLib.openFtInfoWindow(MapsLib.currentPinpoint, data[0][0], json["columns"][1], data[0][1])
   },
 
   bucketRanges: function(indicator_view) {
@@ -303,7 +299,6 @@ var MapsLib = {
   },
 
   mapStyles: function() {
-    console.log('called mapStyles');
     var indicator_view = $('#indicator_view').val();
 
     var ranges = MapsLib.bucketRanges(indicator_view);
@@ -314,7 +309,7 @@ var MapsLib = {
     var interval = range / num_buckets;
     var intervalArray = [ min, (min + interval), (min + interval*2), (min + interval*3) ];
 
-    console.log(intervalArray);
+    //console.log(intervalArray);
     return [
       {
         polygonOptions: {
@@ -387,6 +382,7 @@ var MapsLib = {
     queryStr.push(" WHERE " + whereClause);
   
     var sql = encodeURIComponent(queryStr.join(" "));
+    //console.log("https://www.googleapis.com/fusiontables/v1/query?sql="+sql+"&callback="+callback+"&key="+MapsLib.googleApiKey);
     $.ajax({url: "https://www.googleapis.com/fusiontables/v1/query?sql="+sql+"&callback="+callback+"&key="+MapsLib.googleApiKey, dataType: "jsonp"});
   },
 
