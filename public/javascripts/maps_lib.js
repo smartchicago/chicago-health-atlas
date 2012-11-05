@@ -19,6 +19,7 @@ var MapsLib = {
   //the encrypted Table ID of your Fusion Table (found under File => About)
   //NOTE: numeric IDs will be depricated soon
   fusionTableId:      "1Fc7U3cdueYMlNy2c4SPbKaoQmju5J6UYhkHQNHc",  
+  zipDiabetesId:      "1VyWsjRM3ZzWc0UexTuYxytNCT7dxK0MIWAtxwPs",
   
   //*New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/   
   //*Important* this key is for demonstration purposes. please register your own.   
@@ -39,9 +40,9 @@ var MapsLib = {
   addrMarkerImage: '/images/blue-pushpin.png',
   infoWindow: null,
   currentPinpoint: null,
+  indicator_view: '',
   
   initialize: function() {
-    $( "#resultCount" ).html("");
   
     geocoder = new google.maps.Geocoder();
     var myOptions = {
@@ -53,107 +54,86 @@ var MapsLib = {
     
     MapsLib.searchrecords = null;
     
-    //reset filters
-    $("#txtSearchAddress").val(MapsLib.convertToPlainString($.address.parameter('address')));
-    $("#resultCount").hide();
-     
     //run the default search
     MapsLib.doSearch();
   },
   
-  doSearch: function(location) {
+  doSearch: function() {
     MapsLib.clearSearch();
-    var address = $("#txtSearchAddress").val();
 
     var whereClause = MapsLib.locationColumn + " not equal to ''";
-    
-    // //-----filter by type-------
-    // //remove MapsLib if you don't have any types to filter
-    
-    // //best way to filter results by a type is to create a 'type' column and assign each row a number (strings work as well, but numbers are faster). then we can use the 'IN' operator and return all that are selected
-    // //NOTE: if your column name has spaces in it, surround it with single quotes 
-    // //example: var searchType = "'my filter' IN (-1,";
-    // var searchType = "type IN (-1,";
-    // if ( $("#cbType1").is(':checked')) searchType += "1,";
-    // if ( $("#cbType2").is(':checked')) searchType += "2,";
-    // if ( $("#cbType3").is(':checked')) searchType += "3,";
-    // whereClause += " AND " + searchType.slice(0, searchType.length - 1) + ")";
-    
-    // //-------end of filter by type code--------
-    
-    if (address != "") {
-      if (address.toLowerCase().indexOf(MapsLib.locationScope) == -1)
-        address = address + " " + MapsLib.locationScope;
-  
-      geocoder.geocode( { 'address': address}, function(results, status) {
-        if (status == google.maps.GeocoderStatus.OK) {
-          MapsLib.currentPinpoint = results[0].geometry.location;
-          
-          $.address.parameter('address', encodeURIComponent(address));
-          map.setCenter(MapsLib.currentPinpoint);
-          map.setZoom(14);
-          
-          MapsLib.addrMarker = new google.maps.Marker({
-            position: MapsLib.currentPinpoint, 
-            map: map, 
-            icon: MapsLib.addrMarkerImage,
-            animation: google.maps.Animation.DROP,
-            title:address
-          });
-          
-          whereClause += " AND ST_INTERSECTS(" + MapsLib.locationColumn + ", CIRCLE(LATLNG" + MapsLib.currentPinpoint.toString() + "," + MapsLib.searchRadius + "))";
-          
-          MapsLib.submitSearch(whereClause, map, MapsLib.currentPinpoint);
-        } 
-        else {
-          alert("We could not find your address: " + status);
-        }
-      });
-    }
-    else { //search without geocoding callback
-      MapsLib.submitSearch(whereClause, map);
-    }
+    MapsLib.submitSearch(whereClause, map);
   },
   
-  submitSearch: function(whereClause, map, location) {
-    var indicator_view = $('#indicator_view').val();
+  submitSearch: function(whereClause, map) {
+    
+    if ($('#indicator_view').val() != undefined && $('#indicator_view').val() != '')
+      MapsLib.indicator_view = $('#indicator_view').val()[0];
+    else if ($('#diabetes_view').val() != undefined)
+      MapsLib.indicator_view = $('#diabetes_view').val()[0];
 
-    //get using all filters
-    MapsLib.searchrecords = new google.maps.FusionTablesLayer({
-      query: {
-        from:   MapsLib.fusionTableId,
-        select: MapsLib.locationColumn,
-        where:  whereClause
-      },
-      styles: MapsLib.mapStyles(),
-      suppressInfoWindows: true
-    });
+    //console.log("view: " + MapsLib.indicator_view);
 
-    if (location) {
-      MapsLib.getInfoWindowContent(whereClause);
+    if (MapsLib.indicator_view.indexOf('diabetes percent') != -1) {
+      MapsLib.searchrecords = new google.maps.FusionTablesLayer({
+        query: {
+          from:   MapsLib.zipDiabetesId,
+          select: MapsLib.locationColumn,
+          where:  whereClause
+        },
+        styles: MapsLib.mapStyles('green'),
+        suppressInfoWindows: true
+      });
+
+      MapsLib.searchrecords.setMap(map);
+
+      if (MapsLib.infoWindow) MapsLib.infoWindow.close();
+
+      //override default info window
+      google.maps.event.addListener(MapsLib.searchrecords, 'click', 
+        function(e) { 
+          if (MapsLib.infoWindow) MapsLib.infoWindow.close();
+          MapsLib.openFtInfoWindow(e.latLng, e.row['zip'].value, MapsLib.indicator_view, e.row[MapsLib.indicator_view].value);
+        }
+      );
+
     }
+    else {
+      //get using all filters
+      MapsLib.searchrecords = new google.maps.FusionTablesLayer({
+        query: {
+          from:   MapsLib.fusionTableId,
+          select: MapsLib.locationColumn,
+          where:  whereClause
+        },
+        styles: MapsLib.mapStyles(),
+        suppressInfoWindows: true
+      });
 
-    MapsLib.searchrecords.setMap(map);
+      MapsLib.searchrecords.setMap(map);
 
-    if (MapsLib.infoWindow) MapsLib.infoWindow.close();
+      if (MapsLib.infoWindow) MapsLib.infoWindow.close();
 
-    //override default info window
-    google.maps.event.addListener(MapsLib.searchrecords, 'click', 
-      function(e) { 
-        if (MapsLib.infoWindow) MapsLib.infoWindow.close();
-        // console.log('showing: ' + indicator_view);
-        // console.log(e.row);
-        // console.log(e.row['Community Area Name'].value);
-        // console.log(e.row[indicator_view].value);
-        MapsLib.openFtInfoWindow(e.latLng, e.row['Community Area Name'].value, indicator_view, e.row[indicator_view].value);
-      }
-    ); 
+      //override default info window
+      google.maps.event.addListener(MapsLib.searchrecords, 'click', 
+        function(e) { 
+          if (MapsLib.infoWindow) MapsLib.infoWindow.close();
+          MapsLib.openFtInfoWindow(e.latLng, e.row['Community Area Name'].value, MapsLib.indicator_view, e.row[MapsLib.indicator_view].value);
+        }
+      );
+    }
   },
 
   openFtInfoWindow: function(position, community_area, indicator_name, indicator_value) {
     // Set up and create the infowindow
     if (!MapsLib.infoWindow) MapsLib.infoWindow = new google.maps.InfoWindow({});
      
+    if (indicator_value.indexOf('0.') != -1)
+    {
+      indicator_value = ((+indicator_value)*100).toFixed(2);
+      indicator_value = indicator_value + "%"
+    }
+
     var content = "<div class='googft-info-window' style='font-family: sans-serif'>";
     content += "<span class='lead'>" + community_area + "</span>"
     content += "<p>" + indicator_name + ": " + indicator_value + "</p>";
@@ -170,8 +150,8 @@ var MapsLib = {
   },
   
   getInfoWindowContent: function(whereClause) {
-    var indicator_view = $('#indicator_view').val();
-    var selectColumns = "'Community Area Name', '" + indicator_view + "'";
+    var indicator_view = MapsLib.indicator_view;
+    var selectColumns = "'Community Area Name', '" + MapsLib.indicator_view + "'";
     MapsLib.query(selectColumns, whereClause, "MapsLib.setInfoWindowContent");
   },
   
@@ -291,6 +271,26 @@ var MapsLib = {
       "Unemployment": {
         "max": 40,
         "min": 4.2,
+      },
+      "2006 diabetes percent": {
+        "max": 0.1555,
+        "min": 0.0110,
+      },
+      "2007 diabetes percent": {
+        "max": 0.1555,
+        "min": 0.0110,
+      },
+      "2008 diabetes percent": {
+        "max": 0.1555,
+        "min": 0.0110,
+      },
+      "2009 diabetes percent": {
+        "max": 0.1555,
+        "min": 0.0110,
+      },
+      "2010 diabetes percent": {
+        "max": 0.1555,
+        "min": 0.0110,
       }
     }
 
@@ -298,9 +298,16 @@ var MapsLib = {
 
   },
 
-  mapStyles: function() {
-    var indicator_view = $('#indicator_view').val();
+  mapStyles: function(color) {
 
+    var blue_array = ["#BDD7E7", "#6BAED6", "#3182BD", "#08519C"];
+    var green_array = ["#B2E2E2", "#66C2A4", "#2CA25F", "#006D2C"];
+
+    var color_array = blue_array;
+    if (color == 'green')
+      color_array = green_array;
+
+    var indicator_view = MapsLib.indicator_view;
     var ranges = MapsLib.bucketRanges(indicator_view);
     var min = ranges[0];
     var max = ranges[1];
@@ -310,33 +317,79 @@ var MapsLib = {
     var intervalArray = [ min, (min + interval), (min + interval*2), (min + interval*3) ];
 
     //console.log(intervalArray);
+    MapsLib.createLegend(color_array, intervalArray, max);
+
     return [
       {
         polygonOptions: {
-          fillColor: "#cccccc",
-          fillOpacity: 0.5
+          fillColor: "#ffffff",
+          fillOpacity: 0.6
         }
       }, {
         where: "'" + indicator_view + "' >= " + intervalArray[0] + " AND '" + indicator_view + "' < " + intervalArray[1] + "",
         polygonOptions: {
-          fillColor: "#6fa8dc"
+          fillColor: color_array[0]
         }
       }, {
         where: "'" + indicator_view + "' >= " + intervalArray[1] + " AND '" + indicator_view + "' < " + intervalArray[2] + "",
         polygonOptions: {
-          fillColor: "#3d85c6"
+          fillColor: color_array[1]
         }
       }, {
         where: "'" + indicator_view + "' >= " + intervalArray[2] + " AND '" + indicator_view + "' < " + intervalArray[3] + "",
         polygonOptions: {
-          fillColor: "#0b5394"
+          fillColor: color_array[2]
         }
       }, {
         where: "'" + indicator_view + "' >= " + intervalArray[3] + "",
         polygonOptions: {
-          fillColor: "#073763"
+          fillColor: color_array[3]
         }
       }];
+  },
+
+  createLegend: function(color_array, intervalArray, max) {
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].clear();
+
+    var controlDiv = document.createElement('div');
+
+    // Set CSS styles for the DIV containing the control
+    // Setting padding to 5 px will offset the control
+    // from the edge of the map.
+    controlDiv.style.padding = '5px';
+
+    // Set CSS for the control border.
+    var controlUI = document.createElement('div');
+    controlUI.style.backgroundColor = 'white';
+    controlUI.style.borderStyle = 'solid';
+    controlUI.style.borderWidth = '2px';
+    controlUI.style.cursor = 'pointer';
+    controlDiv.appendChild(controlUI);
+
+    // Set CSS for the control interior.
+    var controlText = document.createElement('div');
+    controlText.style.paddingLeft = '4px';
+    controlText.style.paddingRight = '4px';
+
+    var legendText = "";
+    var cnt = 0;
+    for (color in color_array) {
+      if (intervalArray[cnt + 1] == undefined)
+        intervalArray[cnt + 1] = max;
+
+      var range1 = MapsLib.checkAndConvertToPercentage(intervalArray[cnt]);
+      var range2 = MapsLib.checkAndConvertToPercentage(intervalArray[cnt + 1]);
+      
+      legendText += "<li><span class='filter-box' style=\"background-color: " + color_array[color] + "\"'></span> ";
+      legendText += range1 + " - " + range2 + "</li>";
+      cnt += 1;
+    }
+    legendText = "<strong>" + MapsLib.indicator_view + "</strong><ul class='unstyled'>" + legendText + "</ul>";
+
+    controlText.innerHTML = legendText;
+    controlUI.appendChild(controlText);
+    controlDiv.index = 1;
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(controlDiv);
   },
   
   clearSearch: function() {
@@ -427,5 +480,17 @@ var MapsLib = {
   convertToPlainString: function(text) {
     if (text == undefined) return '';
     return decodeURIComponent(text);
+  },
+
+  checkAndConvertToPercentage: function(number) {
+    if (number <= 0.999)
+    {
+      number = ((+number)*100).toFixed(2);
+      number = number + "%"
+    }
+    else
+      number = number.toFixed(2);
+
+    return number;
   }
 }
