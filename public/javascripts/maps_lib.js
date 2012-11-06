@@ -483,7 +483,7 @@ var MapsLib = {
   },
 
   checkAndConvertToPercentage: function(number) {
-    if (number <= 0.999)
+    if (MapsLib.indicator_view.indexOf('diabetes percent') != -1)
     {
       number = ((+number)*100).toFixed(2);
       number = number + "%"
