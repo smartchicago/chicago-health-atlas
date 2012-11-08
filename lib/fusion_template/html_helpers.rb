@@ -73,12 +73,35 @@ module FusionTemplate
       return "active" if current_menu == menu_name
     end
     
-    def decodeZoneClass zone_class
-      zoningDict = ["Business", "Commercial / Mixed-Use", "Manufacturing", "Residential", "Planned Development",
-                  "Planned Manufacturing District", "Downtown Mixed-Use", "Downtown Core", "Downtown Residential", "Downtown Service",
-                  "Transportation","Parks and Open Space"]
-      
-      zoningDict[zone_class.to_i - 1]
+    def atlas_view_modes
+      return ["Birth Rate",
+              "General Fertility Rate",
+              "Low Birth Weight",
+              "Prenatal Care Beginning in First Trimester",
+              "Preterm Births",
+              "Teen Birth Rate",
+              "Assault (Homicide)",
+              "Breast cancer in females",
+              "Cancer (All Sites)",
+              "Colorectal Cancer",
+              "Diabetes-related",
+              "Firearm-related",
+              "Infant Mortality Rate",
+              "Lung Cancer",
+              "Prostate Cancer in Males",
+              "Stroke (Cerebrovascular Disease)",
+              "Childhood Blood Lead Level Screening",
+              "Childhood Lead Poisoning",
+              "Gonorrhea in Females",
+              "Gonorrhea in Males",
+              "Tuberculosis",
+              "Below Poverty Level",
+              "Crowded Housing",
+              "Dependency",
+              "No High School Diploma",
+              "Per Capita Income",
+              "Unemployment"]
     end
+
   end
 end

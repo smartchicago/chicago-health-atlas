@@ -2,49 +2,38 @@
   .span4
     .well
       %h4
-        Chicago Department of Public Health Indicators
+        Chicago Public Health Indicators
 
-      %label 
-        %select#indicator_view.input-block-level{:multiple => "multiple", :style => "height: 250px"}
-          %option{:value => "Birth Rate", :selected => "selected"} Birth Rate
-          %option{:value => "General Fertility Rate" } General Fertility Rate
-          %option{:value => "Low Birth Weight" } Low Birth Weight
-          %option{:value => "Prenatal Care Beginning in First Trimester" } Prenatal Care Beginning in First Trimester
-          %option{:value => "Preterm Births" } Preterm Births
-          %option{:value => "Teen Birth Rate" } Teen Birth Rate
-          %option{:value => "Assault (Homicide)" } Assault (Homicide)
-          %option{:value => "Breast cancer in females" } Breast cancer in females
-          %option{:value => "Cancer (All Sites)" } Cancer (All Sites)
-          %option{:value => "Colorectal Cancer" } Colorectal Cancer
-          %option{:value => "Diabetes-related" } Diabetes-related
-          %option{:value => "Firearm-related" } Firearm-related
-          %option{:value => "Infant Mortality Rate" } Infant Mortality Rate
-          %option{:value => "Lung Cancer" } Lung Cancer
-          %option{:value => "Prostate Cancer in Males" } Prostate Cancer in Males
-          %option{:value => "Stroke (Cerebrovascular Disease)" } Stroke (Cerebrovascular Disease)
-          %option{:value => "Childhood Blood Lead Level Screening" } Childhood Blood Lead Level Screening
-          %option{:value => "Childhood Lead Poisoning" } Childhood Lead Poisoning
-          %option{:value => "Gonorrhea in Females" } Gonorrhea in Females
-          %option{:value => "Gonorrhea in Males" } Gonorrhea in Males
-          %option{:value => "Tuberculosis" } Tuberculosis
-          %option{:value => "Below Poverty Level" } Below Poverty Level
-          %option{:value => "Crowded Housing" } Crowded Housing
-          %option{:value => "Dependency" } Dependency
-          %option{:value => "No High School Diploma" } No High School Diploma
-          %option{:value => "Per Capita Income" } Per Capita Income
-          %option{:value => "Unemployment" } Unemployment
+      #view_accordion.accordion
 
-    .well
-      %h4
-        Patient-Level Data: Diabetes Cases
+        .accordion-group
+          .accordion-heading
+            %a.accordion-toggle{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#viewDiabetes", "data-view" => "2006 diabetes percent"}
+              %span.filter-box{:style => 'background-color: #2CA25F;'}
+              Diabetes percent
+          .accordion-body.collapse.in{:id => "viewDiabetes"}
+            .accordion-inner
+              Diabetes rate by zip code from 2006 to 2010. Based on patient data from Chicago hospitals.
 
-      %label 
-        %select#diabetes_view.input-block-level{:multiple => "multiple", :style => "height: 100px"}
-          %option{:value => "2006 diabetes percent"} 2006 diabetes rate
-          %option{:value => "2007 diabetes percent"} 2007 diabetes rate
-          %option{:value => "2008 diabetes percent"} 2008 diabetes rate
-          %option{:value => "2009 diabetes percent"} 2009 diabetes rate
-          %option{:value => "2010 diabetes percent"} 2010 diabetes rate
+              %h4
+                Year:
+                %span#diabetes-year-selected
+              #diabetes-year
+              %span.pull-left 2006
+              %span.pull-right 2010
+
+        - cnt = 0
+        - atlas_view_modes.each do |view|
+          .accordion-group
+            .accordion-heading
+              %a.accordion-toggle{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#view#{cnt}", "data-view" => view}
+                %span.filter-box{:style => 'background-color: #3182BD;'}
+                = view
+            .accordion-body.collapse{:id => "view#{cnt}"}
+              .accordion-inner
+                Description of
+                = view
+          - cnt = cnt + 1
 
   .span8
     #mapCanvas
@@ -55,6 +44,7 @@
   = include_javascript :"http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"
   %script{:src => "/javascripts/maps_lib.js?1", :type => "text/javascript"}
   = include_javascript :"bootstrap-popover"
+  = include_javascript :"jquery-ui-slider.min"
 
   :javascript
     $(window).resize(function () {
@@ -62,19 +52,30 @@
         offsetTop = 70; // Calculate the top offset
     
       $('#mapCanvas').css('height', (h - offsetTop));
+      $('#view_accordion').css('height', (h - offsetTop - 120));
     }).resize();
     
     $(function() {
       $('label.checkbox.inline').popover();
       
       MapsLib.initialize();
-      $('#indicator_view').change(function(){
-        $('#diabetes_view').val('');
-        MapsLib.doSearch();
+
+      $('.accordion-toggle').click(function(){
+        var view = $(this).attr('data-view');
+        MapsLib.doSearch(view);
       });
 
-      $('#diabetes_view').change(function(){
-        $('#indicator_view').val('');
-        MapsLib.doSearch();
+      $("#diabetes-year").slider({
+          orientation: "horizontal",
+          range: "min",
+          min: 2006,
+          max: 2010,
+          value: 1,
+          slide: function (event, ui) {
+              $("#diabetes-year-selected").html(ui.value);
+              MapsLib.doSearch(ui.value + " diabetes percent");
+          }
       });
+      $("#diabetes-year-selected").html($("#diabetes-year").slider("value"));
+
     });

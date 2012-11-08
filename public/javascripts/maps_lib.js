@@ -58,21 +58,22 @@ var MapsLib = {
     MapsLib.doSearch();
   },
   
-  doSearch: function() {
+  doSearch: function(view) {
     MapsLib.clearSearch();
 
     var whereClause = MapsLib.locationColumn + " not equal to ''";
-    MapsLib.submitSearch(whereClause, map);
+    MapsLib.submitSearch(whereClause, map, view);
   },
   
-  submitSearch: function(whereClause, map) {
+  submitSearch: function(whereClause, map, view) {
     
-    if ($('#indicator_view').val() != undefined && $('#indicator_view').val() != '')
-      MapsLib.indicator_view = $('#indicator_view').val()[0];
-    else if ($('#diabetes_view').val() != undefined)
-      MapsLib.indicator_view = $('#diabetes_view').val()[0];
+    if (view != undefined)
+      MapsLib.indicator_view = view;
+    else {
+      MapsLib.indicator_view = "2006 diabetes percent";
+  }
 
-    //console.log("view: " + MapsLib.indicator_view);
+    console.log("view: " + MapsLib.indicator_view);
 
     if (MapsLib.indicator_view.indexOf('diabetes percent') != -1) {
       MapsLib.searchrecords = new google.maps.FusionTablesLayer({
