@@ -1,39 +1,47 @@
 .row-fluid
   .span4
-    .well
-      %h4
-        Chicago Public Health Indicators
+    %h4
+      Chicago Public Health Indicators
 
-      #view_accordion.accordion
+    #view_accordion.accordion
 
+      .accordion-group
+        .accordion-heading
+          %a.accordion-toggle{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#viewDiabetes", "data-view" => "2006 diabetes percent"}
+            %span.filter-box{:style => 'background-color: #2CA25F;'}
+            Hospital diabetes cases
+        .accordion-body.collapse.in{:id => "viewDiabetes"}
+          .accordion-inner
+            Percentage of diabetes-related hospital cases by zip code from 2006 to 2010.
+
+            %h4
+              Year:
+              %span#diabetes-year-selected
+            #diabetes-year
+            %span.pull-left 2006
+            %span.pull-right 2010
+
+      - atlas_view_modes.each do |name, value|
         .accordion-group
           .accordion-heading
-            %a.accordion-toggle{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#viewDiabetes", "data-view" => "2006 diabetes percent"}
-              %span.filter-box{:style => 'background-color: #2CA25F;'}
-              Diabetes percent
-          .accordion-body.collapse.in{:id => "viewDiabetes"}
+            %a.accordion-toggle{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#group_#{to_dom_id(name)}", "data-view" => name}
+              %span.filter-box{:style => 'background-color: #3182BD;'}
+              = name
+          .accordion-body.collapse{:id => "group_#{to_dom_id(name)}"}
             .accordion-inner
-              Diabetes rate by zip code from 2006 to 2010. Based on patient data from Chicago hospitals.
+              = name 
+              in Chicago
 
-              %h4
-                Year:
-                %span#diabetes-year-selected
-              #diabetes-year
-              %span.pull-left 2006
-              %span.pull-right 2010
-
-        - cnt = 0
-        - atlas_view_modes.each do |view|
-          .accordion-group
-            .accordion-heading
-              %a.accordion-toggle{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#view#{cnt}", "data-view" => view}
-                %span.filter-box{:style => 'background-color: #3182BD;'}
-                = view
-            .accordion-body.collapse{:id => "view#{cnt}"}
-              .accordion-inner
-                Description of
-                = view
-          - cnt = cnt + 1
+              - value.each do |view|
+                .accordion-group
+                  .accordion-heading
+                    %a.accordion-toggle{"data-parent" => "##view_#{to_dom_id(name)}", "data-toggle" => "collapse", :href => "#view_#{to_dom_id(view)}", "data-view" => view}
+                      %span.filter-box{:style => 'background-color: #3182BD;'}
+                      = view
+                  .accordion-body.collapse{:id => "view_#{to_dom_id(view)}"}
+                    .accordion-inner
+                      Description of
+                      = view
 
   .span8
     #mapCanvas
