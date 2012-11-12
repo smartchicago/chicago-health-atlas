@@ -1,7 +1,8 @@
 .row-fluid
   .span4
-    %h4
-      Chicago Public Health Indicators
+    %p
+      The Chicago Health Atlas visualizes aggregate health-related information so that people can see the prevalence of specific health conditions in their area and find out how they can improve their health.
+      %a{:href => '/about'} Read more &raquo;
 
     #view_accordion.accordion
 
@@ -66,7 +67,7 @@
         offsetTop = 70; // Calculate the top offset
     
       $('#mapCanvas').css('height', (h - offsetTop));
-      $('#view_accordion').css('height', (h - offsetTop - 70));
+      $('#view_accordion').css('height', (h - offsetTop - 120));
     }).resize();
     
     $(function() {
