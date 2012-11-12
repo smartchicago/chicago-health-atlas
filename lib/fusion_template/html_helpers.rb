@@ -97,42 +97,48 @@ module FusionTemplate
     end
     
     def atlas_view_modes
-      return {"Births" => [
-                          "Birth Rate",
-                          "General Fertility Rate",
-                          "Low Birth Weight",
-                          "Prenatal Care Beginning in First Trimester",
-                          "Preterm Births",
-                          "Teen Birth Rate"
-                          ],
-              "Deaths" => [
-                          "Assault (Homicide)",
-                          "Breast cancer in females",
-                          "Cancer (All Sites)",
-                          "Colorectal Cancer",
-                          "Diabetes-related",
-                          "Firearm-related",
-                          "Infant Mortality Rate",
-                          "Lung Cancer",
-                          "Prostate Cancer in Males",
-                          "Stroke (Cerebrovascular Disease)"
-                          ],
-              "Lead" => [  
-                          "Childhood Blood Lead Level Screening",
-                          "Childhood Lead Poisoning"
-                        ],
-              "Infectious disease" => [
-                          "Gonorrhea in Females",
-                          "Gonorrhea in Males",
-                          "Tuberculosis"
-                        ],
-              "Demographics" => [
-                          "Below Poverty Level",
-                          "Crowded Housing",
-                          "Dependency",
-                          "No High School Diploma",
-                          "Per Capita Income",
-                          "Unemployment"]
+      return {"Births" => 
+                  { "views" => ["Birth Rate",
+                                "General Fertility Rate",
+                                "Low Birth Weight",
+                                "Prenatal Care Beginning in First Trimester",
+                                "Preterm Births",
+                                "Teen Birth Rate"],
+                    "colors" =>  ["#BDD7E7", "#6BAED6", "#3182BD", "#08519C"]
+                  },
+              "Deaths" => 
+                  { "views" => ["Assault (Homicide)",
+                                "Breast cancer in females",
+                                "Cancer (All Sites)",
+                                "Colorectal Cancer",
+                                "Diabetes-related",
+                                "Firearm-related",
+                                "Infant Mortality Rate",
+                                "Lung Cancer",
+                                "Prostate Cancer in Males",
+                                "Stroke (Cerebrovascular Disease)"],
+                    "colors" =>  ["#FCAE91", "#FB6A4A", "#DE2D26", "#A50F15"]
+                  },
+              "Lead" => 
+                  { "views" => ["Childhood Blood Lead Level Screening",
+                                "Childhood Lead Poisoning"],
+                    "colors" =>  ["#CCCCCC", "#969696", "#636363", "#252525"]
+                  },
+              "Infectious disease" => 
+                  { "views" => ["Gonorrhea in Females",
+                                "Gonorrhea in Males",
+                                "Tuberculosis"],
+                    "colors" =>  ["#FDBE85", "#FD8D3C", "#E6550D", "#A63603"]
+                  },
+              "Demographics" => 
+                  { "views" => ["Below Poverty Level",
+                                "Crowded Housing",
+                                "Dependency",
+                                "No High School Diploma",
+                                "Per Capita Income",
+                                "Unemployment"],
+                    "colors" =>  ["#CBC9E2", "#9E9AC8", "#756BB1", "#54278F"]
+                  }
               }
     end
 

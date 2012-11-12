@@ -7,12 +7,13 @@
 
       .accordion-group
         .accordion-heading
-          %a.accordion-toggle{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#viewDiabetes", "data-view" => "2006 diabetes percent"}
+          %a.accordion-toggle#accordionDiabetes{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#viewDiabetes", "data-view" => "2006 diabetes percent", "data-colors" => '["#B2E2E2", "#66C2A4", "#2CA25F", "#006D2C"]'}
             %span.filter-box{:style => 'background-color: #2CA25F;'}
             Hospital diabetes cases
-        .accordion-body.collapse.in{:id => "viewDiabetes"}
+        .accordion-body.collapse{:id => "viewDiabetes"}
           .accordion-inner
-            Percentage of diabetes-related hospital cases by zip code from 2006 to 2010.
+            %p
+              Percentage of diabetes-related hospital cases by zip code from 2006 to 2010.
 
             %h4
               Year:
@@ -21,22 +22,27 @@
             %span.pull-left 2006
             %span.pull-right 2010
 
-      - atlas_view_modes.each do |name, value|
+            %hr
+            %h4 Chicago Health Clinics 
+            %p
+              %img{:src => '/images/lightblue.png'} Open
+              %img{:src => '/images/red.png'} Closed
+
+
+      - atlas_view_modes.each do |name, attributes|
         .accordion-group
           .accordion-heading
             %a.accordion-toggle{"data-parent" => "#view_accordion", "data-toggle" => "collapse", :href => "#group_#{to_dom_id(name)}", "data-view" => name}
-              %span.filter-box{:style => 'background-color: #3182BD;'}
+              %span.filter-box{:style => "background-color: #{attributes['colors'][2]};"}
               = name
           .accordion-body.collapse{:id => "group_#{to_dom_id(name)}"}
-            .accordion-inner
-              = name 
-              in Chicago
+            .accordion-inner{:id => "group_inner_#{to_dom_id(name)}"}
 
-              - value.each do |view|
+              - attributes["views"].each do |view|
                 .accordion-group
                   .accordion-heading
-                    %a.accordion-toggle{"data-parent" => "##view_#{to_dom_id(name)}", "data-toggle" => "collapse", :href => "#view_#{to_dom_id(view)}", "data-view" => view}
-                      %span.filter-box{:style => 'background-color: #3182BD;'}
+                    %a.accordion-toggle{"data-parent" => "#group_inner_#{to_dom_id(name)}", "data-toggle" => "collapse", :href => "#view_#{to_dom_id(view)}", "data-view" => view, "data-colors" => attributes['colors']}
+                      %span.filter-box{:style => "background-color: #{attributes['colors'][2]};"}
                       = view
                   .accordion-body.collapse{:id => "view_#{to_dom_id(view)}"}
                     .accordion-inner
@@ -60,7 +66,7 @@
         offsetTop = 70; // Calculate the top offset
     
       $('#mapCanvas').css('height', (h - offsetTop));
-      $('#view_accordion').css('height', (h - offsetTop - 120));
+      $('#view_accordion').css('height', (h - offsetTop - 70));
     }).resize();
     
     $(function() {
@@ -70,7 +76,8 @@
 
       $('.accordion-toggle').click(function(){
         var view = $(this).attr('data-view');
-        MapsLib.doSearch(view);
+        var colors = $(this).attr('data-colors');
+        MapsLib.doSearch(view, colors);
       });
 
       $("#diabetes-year").slider({
@@ -81,9 +88,19 @@
           value: 1,
           slide: function (event, ui) {
               $("#diabetes-year-selected").html(ui.value);
-              MapsLib.doSearch(ui.value + " diabetes percent");
+              MapsLib.doSearch(ui.value + " diabetes percent", '["#B2E2E2", "#66C2A4", "#2CA25F", "#006D2C"]');
           }
       });
       $("#diabetes-year-selected").html($("#diabetes-year").slider("value"));
+
+      $('.accordion').on('show', function (e) {
+         $(e.target).prev('.accordion-heading').find('.accordion-toggle').addClass('active');
+      });
+
+      $('.accordion').on('hide', function (e) {
+          $(this).find('.accordion-toggle').not($(e.target)).removeClass('active');
+      });
+
+      $('#accordionDiabetes').click();
 
     });

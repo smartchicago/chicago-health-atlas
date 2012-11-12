@@ -28,3 +28,7 @@ body {
 .accordion-group {
   background-color: #fff;
 }
+
+.accordion-toggle.active {
+  background-color: #eee;  
+}

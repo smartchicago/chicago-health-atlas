@@ -20,6 +20,7 @@ var MapsLib = {
   //NOTE: numeric IDs will be depricated soon
   fusionTableId:      "152jqgQ46LE6Y2XWCN45QKs2CF515GIj2Am_YAiM",  
   zipDiabetesId:      "1VyWsjRM3ZzWc0UexTuYxytNCT7dxK0MIWAtxwPs",
+  clinicsTableId:     "1NLcaLm_-WRxEsOt57pQ0afGi8X_wNZspSO61D-M", 
   
   //*New Fusion Tables Requirement* API key. found at https://code.google.com/apis/console/   
   //*Important* this key is for demonstration purposes. please register your own.   
@@ -41,6 +42,13 @@ var MapsLib = {
   infoWindow: null,
   currentPinpoint: null,
   indicator_view: '',
+
+  blue_array: ["#BDD7E7", "#6BAED6", "#3182BD", "#08519C"],
+  green_array: ["#B2E2E2", "#66C2A4", "#2CA25F", "#006D2C"],
+  red_array: ["#FCAE91", "#FB6A4A", "#DE2D26", "#A50F15"],
+  grey_array: ["#CCCCCC", "#969696", "#636363", "#252525"],
+  orange_array: ["#FDBE85", "#FD8D3C", "#E6550D", "#A63603"],
+  purple_array: ["#CBC9E2", "#9E9AC8", "#756BB1", "#54278F"],
   
   initialize: function() {
   
@@ -58,22 +66,20 @@ var MapsLib = {
     MapsLib.doSearch();
   },
   
-  doSearch: function(view) {
+  doSearch: function(view, colors) {
     MapsLib.clearSearch();
 
     var whereClause = MapsLib.locationColumn + " not equal to ''";
-    MapsLib.submitSearch(whereClause, map, view);
+    MapsLib.submitSearch(whereClause, map, view, colors);
   },
   
-  submitSearch: function(whereClause, map, view) {
+  submitSearch: function(whereClause, map, view, colors) {
     
     if (view != undefined)
       MapsLib.indicator_view = view;
     else {
       MapsLib.indicator_view = "2006 diabetes percent";
-  }
-
-    console.log("view: " + MapsLib.indicator_view);
+    }
 
     if (MapsLib.indicator_view.indexOf('diabetes percent') != -1) {
       MapsLib.searchrecords = new google.maps.FusionTablesLayer({
@@ -82,7 +88,7 @@ var MapsLib = {
           select: MapsLib.locationColumn,
           where:  whereClause
         },
-        styles: MapsLib.mapStyles('green'),
+        styles: MapsLib.mapStyles(eval(colors)),
         suppressInfoWindows: true
       });
 
@@ -98,6 +104,15 @@ var MapsLib = {
         }
       );
 
+      MapsLib.pointsLayer = new google.maps.FusionTablesLayer({
+        query: {
+          from:   MapsLib.clinicsTableId,
+          select: MapsLib.locationColumn
+        }
+      });
+
+      MapsLib.pointsLayer.setMap(map);
+
     }
     else {
       //get using all filters
@@ -107,7 +122,7 @@ var MapsLib = {
           select: MapsLib.locationColumn,
           where:  whereClause
         },
-        styles: MapsLib.mapStyles(),
+        styles: MapsLib.mapStyles(eval(colors)),
         suppressInfoWindows: true
       });
 
@@ -295,18 +310,17 @@ var MapsLib = {
       }
     }
 
-    return [ranges[indicator_view]['min'], ranges[indicator_view]['max']];
+    if (ranges[indicator_view]['min'] != undefined)
+      return [ranges[indicator_view]['min'], ranges[indicator_view]['max']];
+    else
+      return [0,0];
 
   },
 
-  mapStyles: function(color) {
-
-    var blue_array = ["#BDD7E7", "#6BAED6", "#3182BD", "#08519C"];
-    var green_array = ["#B2E2E2", "#66C2A4", "#2CA25F", "#006D2C"];
-
-    var color_array = blue_array;
-    if (color == 'green')
-      color_array = green_array;
+  mapStyles: function(color_set) {
+    var color_array = MapsLib.blue_array;
+    if (color_set != undefined)
+      color_array = color_set;
 
     var indicator_view = MapsLib.indicator_view;
     var ranges = MapsLib.bucketRanges(indicator_view);
@@ -397,7 +411,9 @@ var MapsLib = {
     if (MapsLib.searchrecords != null)
       MapsLib.searchrecords.setMap(null);
     if (MapsLib.addrMarker != null)
-      MapsLib.addrMarker.setMap(null);  
+      MapsLib.addrMarker.setMap(null); 
+    if (MapsLib.pointsLayer != null)
+      MapsLib.pointsLayer.setMap(null);  
   },
   
   findMe: function() {
