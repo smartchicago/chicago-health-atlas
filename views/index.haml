@@ -14,7 +14,7 @@
         .accordion-body.collapse{:id => "viewDiabetes"}
           .accordion-inner
             %p
-              Percentage of diabetes-related hospital cases by zip code from 2006 to 2010.
+              Percent of diabetes cases by zip code from 2006 to 2010.
 
             %h4
               Year:
@@ -24,7 +24,7 @@
             %span.pull-right 2010
 
             %hr
-            %h4 Chicago Health Clinics 
+            %h4 Chicago Health Clinics
             %p
               %img{:src => '/images/lightblue.png'} Open
               %img{:src => '/images/red.png'} Closed
@@ -65,14 +65,14 @@
     $(window).resize(function () {
       var h = $(window).height(),
         offsetTop = 70; // Calculate the top offset
-    
+
       $('#mapCanvas').css('height', (h - offsetTop));
       $('#view_accordion').css('height', (h - offsetTop - 120));
     }).resize();
-    
+
     $(function() {
       $('label.checkbox.inline').popover();
-      
+
       MapsLib.initialize();
 
       $('.accordion-toggle').click(function(){
